@@ -62,7 +62,7 @@ public class StudentService {
         }
     }
 
-    // --- PUBLIC METHODS ---
+    // public methods
 
     @Transactional
     public StudentResponseDTO create(StudentRequestDTO studentRequestDTO) {
