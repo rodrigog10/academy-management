@@ -1,5 +1,7 @@
 package com.academia.gestao.responses;
+import com.academia.gestao.domain.Student;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.time.LocalDate;

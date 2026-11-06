@@ -2,6 +2,7 @@ package com.academia.gestao.service;
 
 import com.academia.gestao.domain.Student;
 import com.academia.gestao.exceptions.BusinessRuleException;
+import com.academia.gestao.exceptions.ResourceNotFoundException;
 import com.academia.gestao.mapper.StudentMapper;
 import com.academia.gestao.repository.StudentRepository;
 import com.academia.gestao.requests.StudentRequestDTO;
@@ -17,6 +18,8 @@ import org.mockito.Mock;
 import org.mockito.*;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -39,8 +42,8 @@ class StudentServiceTests {
 
         StudentRequestDTO studentRequestDTO = new StudentRequestDTO();
         studentRequestDTO.setName("José Rodrigo Bispo");
-        studentRequestDTO.setEmail("joserodrigo@gmail.com");
-        studentRequestDTO.setCpf("46516052069");
+        studentRequestDTO.setEmail("rodrigo@gmail.com");
+        studentRequestDTO.setCpf("94159870066");
 
         when(studentRepository.existsByEmail(studentRequestDTO.getEmail())).thenReturn(false);
         when(studentRepository.existsByCpf(studentRequestDTO.getCpf())).thenReturn(false);
@@ -70,8 +73,8 @@ class StudentServiceTests {
         // arrange
         StudentRequestDTO studentRequestDTO = new StudentRequestDTO();
         studentRequestDTO.setName("José Rodrigo Bispo");
-        studentRequestDTO.setCpf("23130893040");
-        studentRequestDTO.setEmail("joserodrigo@gmail.com");
+        studentRequestDTO.setCpf("94159870066");
+        studentRequestDTO.setEmail("rodrigo@gmail.com");
 
         when(studentRepository.existsByCpf(studentRequestDTO.getCpf())).thenReturn(true);
 
@@ -88,9 +91,9 @@ class StudentServiceTests {
     void create_ShouldThrowException_WhenEmailIsInvalid(){
         //arrange
         StudentRequestDTO studentRequestDTO = new StudentRequestDTO();
-        studentRequestDTO.setName("Ana Clara Alves");
+        studentRequestDTO.setName("José Rodrigo Bispo");
         studentRequestDTO.setCpf("94159870066");
-        studentRequestDTO.setEmail("anaclara123@gmail.com");
+        studentRequestDTO.setEmail("rodrigo@gmail.com");
 
         when(studentRepository.existsByEmail(studentRequestDTO.getEmail())).thenReturn(true);
 
@@ -101,4 +104,44 @@ class StudentServiceTests {
 
         verify(studentRepository, never()).save(any());
     }
+
+    @Test
+    @DisplayName("Deve encontrar o estudante cadastrado")
+    void findById_ShouldReturnStudent_WhenIdIsValid(){
+
+        Student student = new Student();
+        student.setId(1L);
+        student.setName("José Rodrigo Bispo");
+        student.setCpf("94159870066");
+        student.setEmail("rodrigo@gmail.com");
+
+
+        when(studentRepository.findById(student.getId())).thenReturn(Optional.of(student));
+
+        StudentResponseDTO studentResponseDTO = studentService.findById(student.getId());
+
+        assertNotNull(Optional.of(studentResponseDTO));
+        assertEquals(student.getName(), studentResponseDTO.getName());
+        assertEquals(student.getCpf(), studentResponseDTO.getCpf());
+        assertEquals(student.getEmail(), studentResponseDTO.getEmail());
+
+    }
+
+    @Test
+    @DisplayName("Deve lançar exceção ao não encontrar o aluno")
+    void findById_ShouldThrowException_WhenIdIsInvalid(){
+
+        Student student = new Student();
+        student.setId(1L);
+
+        when(studentRepository.findById(student.getId())).thenReturn(Optional.empty());
+
+        ResourceNotFoundException exception = assertThrows(ResourceNotFoundException.class, () -> studentService.findById(student.getId()));
+
+        assertEquals("Student not found with Id " + student.getId() + ".", exception.getMessage());
+
+        //apenas colei isso daqui do outro teste que faz a mesma verify!
+        verify(studentRepository, never()).save(any());
+    }
+
 }
