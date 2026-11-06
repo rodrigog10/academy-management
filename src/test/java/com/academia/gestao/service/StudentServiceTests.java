@@ -15,9 +15,8 @@ import org.mapstruct.factory.Mappers;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 
-import org.mockito.*;
+import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
-
 
 import java.util.Optional;
 
@@ -55,20 +54,16 @@ class StudentServiceTests {
 
         StudentResponseDTO responseDTO = studentService.create(studentRequestDTO);
 
-        // asserts here
-        // at this point, we need to ensure that the values in responseDTO are equal to the values in studentEntity, so:
         assertNotNull(responseDTO);
         assertEquals(responseDTO.getName(), studentRequestDTO.getName());
         assertEquals(responseDTO.getEmail(), studentRequestDTO.getEmail());
         assertEquals(responseDTO.getCpf(), studentRequestDTO.getCpf());
 
-
-        // verify here
         verify(studentRepository, times(1)).save(any(Student.class));
     }
     @Test
     @DisplayName("Deve lançar exceção quando o CPF já estiver cadastrado")
-    void create_ShouldThrowBusiness_WhenCPFIsInvalid () {
+    void create_ShouldThrowBusiness_WhenCPFAlreadyExists () {
 
         // arrange
         StudentRequestDTO studentRequestDTO = new StudentRequestDTO();
@@ -88,7 +83,7 @@ class StudentServiceTests {
 
     @Test
     @DisplayName("Deve lançar exceção quando o email já estiver cadastrado")
-    void create_ShouldThrowException_WhenEmailIsInvalid(){
+    void create_ShouldThrowException_WhenEmailAlreadyExists(){
         //arrange
         StudentRequestDTO studentRequestDTO = new StudentRequestDTO();
         studentRequestDTO.setName("José Rodrigo Bispo");
@@ -120,15 +115,16 @@ class StudentServiceTests {
 
         StudentResponseDTO studentResponseDTO = studentService.findById(student.getId());
 
-        assertNotNull(Optional.of(studentResponseDTO));
+        assertNotNull(studentResponseDTO);
         assertEquals(student.getName(), studentResponseDTO.getName());
         assertEquals(student.getCpf(), studentResponseDTO.getCpf());
         assertEquals(student.getEmail(), studentResponseDTO.getEmail());
 
+        verify(studentRepository, never()).save(any());
     }
 
     @Test
-    @DisplayName("Deve lançar exceção ao não encontrar o aluno")
+    @DisplayName("Deve lançar exceção quando não encontrar o aluno")
     void findById_ShouldThrowException_WhenIdIsInvalid(){
 
         Student student = new Student();
@@ -140,8 +136,6 @@ class StudentServiceTests {
 
         assertEquals("Student not found with Id " + student.getId() + ".", exception.getMessage());
 
-        //apenas colei isso daqui do outro teste que faz a mesma verify!
         verify(studentRepository, never()).save(any());
     }
-
 }

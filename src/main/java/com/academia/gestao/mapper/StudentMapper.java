@@ -5,10 +5,6 @@ import com.academia.gestao.requests.StudentPatchRequestDTO;
 import com.academia.gestao.requests.StudentRequestDTO;
 import com.academia.gestao.responses.StudentResponseDTO;
 import org.mapstruct.*;
-import org.springframework.data.domain.Page;
-
-import java.util.List;
-
 
 @Mapper(componentModel = "spring")
 
