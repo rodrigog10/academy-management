@@ -17,7 +17,13 @@ import org.mockito.Mock;
 
 import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 
+import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -37,7 +43,7 @@ class StudentServiceTests {
 
     @Test
     @DisplayName("Deve cadastrar o aluno corretamente com os dados postos ao banco de dados")
-    void create_ShouldCreateStudent_WhenDataIsValid(){
+    void create_ShouldCreateStudent_WhenDataIsValid() {
 
         StudentRequestDTO studentRequestDTO = new StudentRequestDTO();
         studentRequestDTO.setName("José Rodrigo Bispo");
@@ -136,6 +142,41 @@ class StudentServiceTests {
 
         assertEquals("Student not found with Id " + student.getId() + ".", exception.getMessage());
 
+        verify(studentRepository, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("Deve expor uma página dos estudantes cadastrados")
+    void findAll_ShouldReturnPageStudent_WhenDataIsValid()
+    {
+
+        Pageable pageable = PageRequest.of(0, 10);
+
+        Student student1 = new Student();
+        student1.setId(1L);
+        student1.setName("José Rodrigo");
+        student1.setEmail("rodrigo@gmail.com");
+        student1.setCpf("94159870066");
+
+        Student student2 = new Student();
+        student2.setId(2L);
+        student2.setName("Ana Clara");
+        student2.setEmail("anaclara@gmail.com");
+        student2.setCpf("00675487099");
+
+        List<Student> studentList = List.of(student1, student2);
+        Page<Student> studentPage = new PageImpl<>(studentList, pageable, studentList.size());
+
+        when(studentRepository.findAll(pageable)).thenReturn(studentPage);
+
+        Page<StudentResponseDTO> response = studentService.findAll(pageable);
+
+        assertNotNull(response);
+        assertEquals(2, response.getTotalElements());
+        assertEquals(student1.getName(), response.getContent().get(0).getName());
+        assertEquals(student2.getName(), response.getContent().get(1).getName());
+
+        verify(studentRepository, times(1)).findAll(pageable);
         verify(studentRepository, never()).save(any());
     }
 }
