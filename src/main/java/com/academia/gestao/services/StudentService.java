@@ -90,9 +90,9 @@ public class StudentService {
         validateUniqueFields(studentRequestDTO, id);
 
         studentMapper.updateEntityFromDTO(studentRequestDTO, studentEntity);
-        Student alunoUpdatedEntity = studentRepository.save(studentEntity);
+        Student studentUpdatedEntity = studentRepository.save(studentEntity);
 
-        return studentMapper.toStudentDTO(alunoUpdatedEntity);
+        return studentMapper.toStudentDTO(studentUpdatedEntity);
     }
 
     @Transactional

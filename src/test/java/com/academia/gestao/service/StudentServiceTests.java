@@ -21,7 +21,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.web.PageableDefault;
+
 
 import java.util.List;
 import java.util.Optional;
@@ -42,7 +42,7 @@ class StudentServiceTests {
     private StudentMapper studentMapper = Mappers.getMapper(StudentMapper.class);
 
     @Test
-    @DisplayName("Deve cadastrar o aluno corretamente com os dados postos ao banco de dados")
+    @DisplayName("Deve cadastrar o estudante e retornar o DTO quando os dados forem válidos")
     void create_ShouldCreateStudent_WhenDataIsValid() {
 
         StudentRequestDTO studentRequestDTO = new StudentRequestDTO();
@@ -67,9 +67,10 @@ class StudentServiceTests {
 
         verify(studentRepository, times(1)).save(any(Student.class));
     }
+
     @Test
-    @DisplayName("Deve lançar exceção quando o CPF já estiver cadastrado")
-    void create_ShouldThrowBusiness_WhenCPFAlreadyExists () {
+    @DisplayName("Deve lançar BusinessRuleException quando o CPF já estiver cadastrado")
+    void create_ShouldThrowBusinessRuleException_WhenCpfAlreadyExists() {
 
         // arrange
         StudentRequestDTO studentRequestDTO = new StudentRequestDTO();
@@ -82,14 +83,14 @@ class StudentServiceTests {
         // act & assert
         BusinessRuleException exception = assertThrows(BusinessRuleException.class, () -> studentService.create(studentRequestDTO));
 
-        assertEquals("Student already registered with CPF: " +  studentRequestDTO.getCpf(), exception.getMessage());
+        assertEquals("Student already registered with CPF: " + studentRequestDTO.getCpf(), exception.getMessage());
 
         verify(studentRepository, never()).save(any());
     }
 
     @Test
-    @DisplayName("Deve lançar exceção quando o email já estiver cadastrado")
-    void create_ShouldThrowException_WhenEmailAlreadyExists(){
+    @DisplayName("Deve lançar BusinessRuleException quando o e-mail já estiver cadastrado")
+    void create_ShouldThrowBusinessRuleException_WhenEmailAlreadyExists() {
         //arrange
         StudentRequestDTO studentRequestDTO = new StudentRequestDTO();
         studentRequestDTO.setName("José Rodrigo Bispo");
@@ -101,14 +102,14 @@ class StudentServiceTests {
         // act & assert
         BusinessRuleException exception = assertThrows(BusinessRuleException.class, () -> studentService.create(studentRequestDTO));
 
-        assertEquals("Student already registered with Email: " +  studentRequestDTO.getEmail(), exception.getMessage());
+        assertEquals("Student already registered with Email: " + studentRequestDTO.getEmail(), exception.getMessage());
 
         verify(studentRepository, never()).save(any());
     }
 
     @Test
-    @DisplayName("Deve encontrar o estudante cadastrado")
-    void findById_ShouldReturnStudent_WhenIdIsValid(){
+    @DisplayName("Deve retornar o estudante quando o ID existir")
+    void findById_ShouldReturnStudentResponseDTO_WhenIdExists() {
 
         Student student = new Student();
         student.setId(1L);
@@ -130,8 +131,8 @@ class StudentServiceTests {
     }
 
     @Test
-    @DisplayName("Deve lançar exceção quando não encontrar o aluno")
-    void findById_ShouldThrowException_WhenIdIsInvalid(){
+    @DisplayName("Deve lançar ResourceNotFoundException quando o ID não for encontrado")
+    void findById_ShouldThrowResourceNotFoundException_WhenIdDoesNotExist() {
 
         Student student = new Student();
         student.setId(1L);
@@ -146,9 +147,8 @@ class StudentServiceTests {
     }
 
     @Test
-    @DisplayName("Deve expor uma página dos estudantes cadastrados")
-    void findAll_ShouldReturnPageStudent_WhenDataIsValid()
-    {
+    @DisplayName("Deve retornar uma página de estudantes com sucesso")
+    void findAll_ShouldReturnPageOfStudents_WhenSuccessful() {
 
         Pageable pageable = PageRequest.of(0, 10);
 
@@ -179,4 +179,5 @@ class StudentServiceTests {
         verify(studentRepository, times(1)).findAll(pageable);
         verify(studentRepository, never()).save(any());
     }
+
 }
