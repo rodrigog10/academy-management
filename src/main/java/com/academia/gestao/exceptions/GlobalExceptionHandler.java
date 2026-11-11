@@ -43,7 +43,6 @@ public class GlobalExceptionHandler {
             return ResponseEntity.status(status).body(structuredErrorMessage);
 }
 
-
 @ExceptionHandler({MethodArgumentNotValidException.class})
     public ResponseEntity<StandardError> handleMethodArgumentNotValidException(MethodArgumentNotValidException e, HttpServletRequest request) {
 

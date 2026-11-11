@@ -184,42 +184,37 @@ class StudentServiceTests {
     @DisplayName("Deve atualizar um cadastro por completo corretamente")
     void update_ShouldReturnUpdatedStudent_WhenSuccessful() {
 
-        Long studentId = 1L;
-
-
         Student studentEntity = new Student();
-        studentEntity.setId(studentId);
+        studentEntity.setId(1L);
         studentEntity.setName("José Rodrigo");
         studentEntity.setEmail("rodrigo@gmail.com");
         studentEntity.setCpf("94159870066");
-
 
         StudentRequestDTO studentRequestDTO = new StudentRequestDTO();
         studentRequestDTO.setName("José Rodrigo Bispo");
         studentRequestDTO.setEmail("rodrigobispo@gmail.com");
         studentRequestDTO.setCpf("94159870066");
 
-
-        when(studentRepository.findById(studentId)).thenReturn(Optional.of(studentEntity));
-
+        when(studentRepository.findById(studentEntity.getId())).thenReturn(Optional.of(studentEntity));
 
         when(studentRepository.save(studentEntity)).thenReturn(studentEntity);
 
-
-        StudentResponseDTO studentResponseDTO = studentService.update(studentId, studentRequestDTO);
-
+        StudentResponseDTO studentResponseDTO = studentService.update(studentEntity.getId(), studentRequestDTO);
 
         assertNotNull(studentResponseDTO);
-        assertEquals(studentId, studentResponseDTO.getId());
-
+        assertEquals(studentEntity.getId(), studentResponseDTO.getId());
 
         assertEquals(studentRequestDTO.getName(), studentResponseDTO.getName());
         assertEquals(studentRequestDTO.getEmail(), studentResponseDTO.getEmail());
         assertEquals(studentRequestDTO.getCpf(), studentResponseDTO.getCpf());
 
-
-        verify(studentRepository, times(1)).findById(studentId);
+        verify(studentRepository, times(1)).findById(studentEntity.getId());
         verify(studentRepository, times(1)).save(studentEntity);
     }
 
+    // TODO: implement update test (sad path)
+    // TODO: implement partialUpdate test (happy path)
+    // TODO: implement partialUpdate test (sad path)
+    // TODO: implement delete test (happy path)
+    // TODO: implement delete test (sad path)
 }
