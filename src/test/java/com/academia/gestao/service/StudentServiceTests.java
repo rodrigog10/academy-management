@@ -5,6 +5,7 @@ import com.academia.gestao.exceptions.BusinessRuleException;
 import com.academia.gestao.exceptions.ResourceNotFoundException;
 import com.academia.gestao.mapper.StudentMapper;
 import com.academia.gestao.repository.StudentRepository;
+import com.academia.gestao.requests.StudentPatchRequestDTO;
 import com.academia.gestao.requests.StudentRequestDTO;
 import com.academia.gestao.responses.StudentResponseDTO;
 import com.academia.gestao.services.StudentService;
@@ -21,7 +22,6 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-
 
 import java.util.List;
 import java.util.Optional;
@@ -72,7 +72,6 @@ class StudentServiceTests {
     @DisplayName("Deve lançar BusinessRuleException quando o CPF já estiver cadastrado")
     void create_ShouldThrowBusinessRuleException_WhenCpfAlreadyExists() {
 
-        // arrange
         StudentRequestDTO studentRequestDTO = new StudentRequestDTO();
         studentRequestDTO.setName("José Rodrigo Bispo");
         studentRequestDTO.setCpf("94159870066");
@@ -80,7 +79,7 @@ class StudentServiceTests {
 
         when(studentRepository.existsByCpf(studentRequestDTO.getCpf())).thenReturn(true);
 
-        // act & assert
+
         BusinessRuleException exception = assertThrows(BusinessRuleException.class, () -> studentService.create(studentRequestDTO));
 
         assertEquals("Student already registered with CPF: " + studentRequestDTO.getCpf(), exception.getMessage());
@@ -91,7 +90,7 @@ class StudentServiceTests {
     @Test
     @DisplayName("Deve lançar BusinessRuleException quando o e-mail já estiver cadastrado")
     void create_ShouldThrowBusinessRuleException_WhenEmailAlreadyExists() {
-        //arrange
+
         StudentRequestDTO studentRequestDTO = new StudentRequestDTO();
         studentRequestDTO.setName("José Rodrigo Bispo");
         studentRequestDTO.setCpf("94159870066");
@@ -99,7 +98,7 @@ class StudentServiceTests {
 
         when(studentRepository.existsByEmail(studentRequestDTO.getEmail())).thenReturn(true);
 
-        // act & assert
+
         BusinessRuleException exception = assertThrows(BusinessRuleException.class, () -> studentService.create(studentRequestDTO));
 
         assertEquals("Student already registered with Email: " + studentRequestDTO.getEmail(), exception.getMessage());
@@ -212,9 +211,117 @@ class StudentServiceTests {
         verify(studentRepository, times(1)).save(studentEntity);
     }
 
-    // TODO: implement update test (sad path)
+    @Test
+    @DisplayName("Deve lançar BusinessRuleException quando o CPF já estiver cadastrado")
+    void update_ShouldThrowException_WhenCPFAlreadyExists() {
+
+        Student studentEntity = new Student();
+        studentEntity.setId(1L);
+        studentEntity.setName("José Rodrigo");
+        studentEntity.setEmail("rodrigo@gmail.com");
+        studentEntity.setCpf("94159870066");
+
+        StudentRequestDTO studentRequestDTO = new StudentRequestDTO();
+        studentRequestDTO.setName("José Rodrigo Bispo");
+        studentRequestDTO.setEmail("rodrigobispo@gmail.com");
+        //example: he tried to update the cpf with another existent cpf (already exists in db, ana cpf xd):
+        studentRequestDTO.setCpf("00675487099");
+
+        when(studentRepository.findById(studentEntity.getId())).thenReturn(Optional.of(studentEntity));
+
+        when(studentRepository.existsByCpfAndIdNot(studentRequestDTO.getCpf(), studentEntity.getId())).thenReturn(true);
+        BusinessRuleException exception = assertThrows(BusinessRuleException.class, () -> studentService.update(studentEntity.getId(), studentRequestDTO));
+
+        assertEquals("CPF already registered for another student: " + studentRequestDTO.getCpf(), exception.getMessage());
+
+        verify(studentRepository, never()).save(any());
+
+    }
+
+    @Test
+    @DisplayName("Deve lançar BusinessRuleException quando o E-mail já estiver cadastrado")
+    void update_ShouldThrowException_WhenEmailAlreadyExists() {
+
+        Student studentEntity = new Student();
+        studentEntity.setId(1L);
+        studentEntity.setName("José Rodrigo");
+        studentEntity.setEmail("rodrigo@gmail.com");
+        studentEntity.setCpf("94159870066");
+
+        StudentRequestDTO studentRequestDTO = new StudentRequestDTO();
+        studentRequestDTO.setName("José Rodrigo Bispo");
+        studentRequestDTO.setEmail("anaclara@gmail.com");
+        studentRequestDTO.setCpf("94159870066");
+
+        when(studentRepository.findById(studentEntity.getId())).thenReturn(Optional.of(studentEntity));
+
+        when(studentRepository.existsByEmailAndIdNot(studentRequestDTO.getEmail(), studentEntity.getId())).thenReturn(true);
+
+        BusinessRuleException exception =
+                assertThrows(BusinessRuleException.class, () -> studentService.update(studentEntity.getId(), studentRequestDTO));
+
+        assertEquals("Email already registered for another student: " + studentRequestDTO.getEmail(), exception.getMessage());
+
+        verify(studentRepository, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("Deve lançar ResourceNotFoundException ao tentar atualizar estudante com ID inexistente")
+    void update_ShouldThrowResourceNotFoundException_WhenIdDoesNotExist() {
+
+        Long nonExistentId = 99L;
+        StudentRequestDTO requestDTO = new StudentRequestDTO();
+        requestDTO.setName("José Rodrigo Bispo");
+        requestDTO.setEmail("rodrigobispo@gmail.com");
+        requestDTO.setCpf("94159870066");
+
+        when(studentRepository.findById(nonExistentId)).thenReturn(Optional.empty());
+
+        ResourceNotFoundException exception = assertThrows(
+                ResourceNotFoundException.class,
+                () -> studentService.update(nonExistentId, requestDTO)
+        );
+
+        assertEquals("Student not found with Id " + nonExistentId + ".", exception.getMessage());
+
+        verify(studentRepository, times(1)).findById(nonExistentId);
+        verify(studentRepository, never()).save(any());
+    }
+
+
     // TODO: implement partialUpdate test (happy path)
+
+    @Test
+    @DisplayName("Deve realizar uma atualização parcial com sucesso")
+    void update_ShouldPartialUpdate_WhenDataIsValid() {
+
+        Student studentEntity = new Student();
+        studentEntity.setId(1L);
+        studentEntity.setName("José Rodrigo");
+        studentEntity.setEmail("rodrigo@gmail.com");
+        studentEntity.setCpf("94159870066");
+
+        StudentPatchRequestDTO studentPatchRequestDTO = new StudentPatchRequestDTO();
+        studentPatchRequestDTO.setName("José Rodrigo Bispo");
+
+       when(studentRepository.findById(studentEntity.getId())).thenReturn(Optional.of(studentEntity));
+
+       when(studentRepository.save(studentEntity)).thenReturn(studentEntity);
+
+        StudentResponseDTO studentResponseDTO = studentService.partialUpdate(studentEntity.getId(), studentPatchRequestDTO);
+
+        assertNotNull(studentResponseDTO);
+        assertEquals(studentPatchRequestDTO.getName(), studentResponseDTO.getName());
+        assertEquals(studentEntity.getEmail(), studentResponseDTO.getEmail());
+        assertEquals(studentEntity.getCpf(), studentResponseDTO.getCpf());
+
+        verify(studentRepository, times(1)).findById(studentEntity.getId());
+        verify(studentRepository, times(1)).save(studentEntity);
+    }
+
     // TODO: implement partialUpdate test (sad path)
+
     // TODO: implement delete test (happy path)
+
     // TODO: implement delete test (sad path)
 }
