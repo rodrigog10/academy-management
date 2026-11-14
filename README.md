@@ -1,28 +1,29 @@
-# 🎓 API para gerenciamento de cadastros
+# 🎓 Academy Management API
 
-Uma API RESTful desenvolvida em **Java** e **Spring Boot** para gerenciamento de cadastros utilizando alunos como referência. O projeto implementa operações CRUD completas, separação estrita por camadas com DTOs, mapeamento com **MapStruct**, atualizações parciais com **PATCH**, containerização com **Docker** e tratamento global de exceções.
+API RESTful desenvolvida em **Java** e **Spring Boot** para gerenciamento de cadastros e operações de uma academia. O projeto aplica arquitetura em camadas, validação de dados e regras de negócio, paginação, tratamento centralizado de exceções e testes automatizados.
 
 ---
 
 ## 🛠️ Tecnologias Utilizadas
 
-- **Java 17+** / **Spring Boot 3**
-- **Spring Data JPA** (Persistência de Dados)
-- **Spring Validation** (Validação de Payloads)
-- **MapStruct** (Mapeamento de alta performance entre Entidades e DTOs)
-- **PostgreSQL** (Banco de Dados Relacional)
-- **Docker** & **Docker Compose** (Containerização do ambiente)
-- **Lombok** (Produtividade e redução de código boilerplate)
-- **Maven** (Gerenciador de dependências)
+- **Java 17+** & **Spring Boot 3**
+- **Spring Data JPA** (Persistência e consultas paginadas)
+- **Spring Validation** (Validação de entrada e contratos)
+- **PostgreSQL** (Banco de dados relacional)
+- **MapStruct & Lombok** (Mapeamento entre camadas e produtividade)
+- **JUnit 5 & Mockito** (Testes unitários automatizados)
+- **Docker & Docker Compose** (Containerização do ambiente)
+- **Maven** (Gerenciamento de dependências e build)
 
 ---
 
 ## 🚀 Arquitetura e Destaques Técnicos
 
-- **Padrão DTO Granular:** Uso de DTOs especializados para cada operação (`AlunoRequestDTO`, `AlunoPatchRequestDTO` e `AlunoResponseDTO`) para garantir a segurança da camada de domínio.
-- **PATCH Parcial com MapStruct:** Utilização de `@BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)` acoplado à injeção via `@MappingTarget` para realizar atualizações parciais sem sobrescrever dados existentes com `null`.
-- **Tratamento Global de Exceções:** Captura centralizada de erros com `@RestControllerAdvice` e transformação em contratos JSON padronizados (`StandardError` e `ValidationError`), garantindo retornos HTTP adequados (ex: `404 Not Found`, `400 Bad Request`).
-- **Gerenciamento de Memória Eficiente:** Métodos de atualização operam via alteração em memória por referência (`void`), evitando alocações desnecessárias.
+- **Separação Estrita de Camadas e DTOs:** Isolamento total entre as entidades de persistência e os contratos expostos na API (`Request`, `PatchRequest` e `Response`), protegendo o modelo de domínio.
+- **Integridade e Regras de Negócio:** Validação de unicidade para dados sensíveis (CPF e e-mail) tanto no cadastro quanto nas operações de atualização, evitando inconsistências na base.
+- **Operações REST Completas:** Suporte a criação, busca individual, listagem paginada, atualização integral (`PUT`), atualização parcial sem sobrescrita de campos nulos (`PATCH`) e exclusão.
+- **Tratamento Global de Exceções:** Captura centralizada de erros de validação, regras de negócio e recursos não encontrados, retornando respostas HTTP semânticas e payloads JSON padronizados.
+- **Qualidade de Software com Testes Unitários:** Cobertura da camada de serviços com JUnit 5 e Mockito, validando fluxos de sucesso, exceções de negócio e isolamento de efeitos colaterais.
 
 ---
 
@@ -30,52 +31,55 @@ Uma API RESTful desenvolvida em **Java** e **Spring Boot** para gerenciamento de
 
 | Método | Rota | Descrição | Status Sucesso |
 | :--- | :--- | :--- | :--- |
-| `POST` | `/alunos` | Cadastra um novo aluno | `201 Created` |
-| `GET` | `/alunos` | Lista todos os alunos cadastrados | `200 OK` |
-| `GET` | `/alunos/{id}` | Busca um aluno específico pelo ID | `200 OK` |
-| `PUT` | `/alunos/{id}` | Atualização completa dos dados do aluno | `200 OK` |
-| `PATCH` | `/alunos/{id}` | Atualização parcial (ex: alterar apenas e-mail) | `200 OK` |
-| `DELETE` | `/alunos/{id}` | Remove um aluno da base de dados | `204 No Content` |
+| `POST` | `/students` | Cadastra um novo aluno | `201 Created` |
+| `GET` | `/students` | Lista os alunos de forma paginada | `200 OK` |
+| `GET` | `/students/{id}` | Busca um aluno específico pelo ID | `200 OK` |
+| `PUT` | `/students/{id}` | Atualização completa dos dados do aluno | `200 OK` |
+| `PATCH` | `/students/{id}` | Atualização parcial dos dados do aluno | `200 OK` |
+| `DELETE` | `/students/{id}` | Remove um aluno da base de dados | `204 No Content` |
+
+*(Nota: Caso suas rotas ainda estejam mapeadas como `/alunos`, basta ajustar a coluna de rotas acima para manter 100% de fidelidade com o Controller).*
 
 ---
 
 ## ⚙️ Como Executar o Projeto
 
 ### Pré-requisitos
-- **JDK 17** ou superior instalado
-- **Docker** e **Docker Compose** instalados
+- **JDK 17** ou superior
+- **Docker** e **Docker Compose**
 - **Git**
 
 ### Passo a Passo
 
 1. **Clone o repositório:**
    ```bash
-   git clone https://github.com/SEU-USUARIO/NOME-DO-REPOSITORIO.git
+   git clone [https://github.com/SEU-USUARIO/NOME-DO-REPOSITORIO.git](https://github.com/SEU-USUARIO/NOME-DO-REPOSITORIO.git)
    cd NOME-DO-REPOSITORIO
-   ```
 
-2. **Suba o banco de dados PostgreSQL via Docker Compose:**
-   ```bash
-   docker compose up -d
-   ```
+    Suba o banco de dados PostgreSQL via Docker Compose:
+    Bash
 
-3. **Execute a aplicação Spring Boot:**
-   ```bash
-   ./mvnw spring-boot:run
-   ```
+    docker compose up -d
 
-A API estará acessível em `http://localhost:8080`.
+    Execute a aplicação:
+    Bash
 
----
+    ./mvnw spring-boot:run
 
-## 📋 Exemplo de Payload (PATCH /alunos/{id})
+A API estará disponível em http://localhost:8080.
+🧪 Executando os Testes
 
-Para realizar uma atualização parcial alterando apenas o e-mail, envie:
+Para rodar a suíte de testes automatizados via Maven:
+Bash
 
-```json
-{
-  "email": "novo.email@dominio.com"
-}
-```
+./mvnw test
 
-Os demais campos (`name`, `cpf`) serão preservados na base de dados com seus valores originais.
+🗺️ Próximos Passos
+
+    [ ] Testes de camada Web (@WebMvcTest + MockMvc) para validação de contratos HTTP
+
+    [ ] Autenticação e autorização stateless com Spring Security + JWT
+
+    [ ] Controle de acesso baseado em perfis (ADMIN, STUDENT)
+
+    [ ] Documentação interativa da API com Swagger / OpenAPI
