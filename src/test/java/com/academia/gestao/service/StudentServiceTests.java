@@ -391,6 +391,37 @@ class StudentServiceTests {
     }
 
     // TODO: implement delete test (happy path)
+    @Test
+    @DisplayName("Deve deletar um cadastro corretamente quando o Id existir")
+    void delete_ShouldDelete_WhenIdExists(){
+        Student studentEntity = new Student();
 
-    // TODO: implement delete test (sad path)
+        studentEntity.setId(1L);
+        studentEntity.setName("José Rodrigo");
+        studentEntity.setEmail("rodrigo@gmail.com");
+        studentEntity.setCpf("94159870066");
+
+        when(studentRepository.findById(studentEntity.getId())).thenReturn(Optional.of(studentEntity));
+
+        assertDoesNotThrow(() -> studentService.delete(studentEntity.getId()));
+        verify(studentRepository, times(1)).findById(studentEntity.getId());
+        verify(studentRepository, times(1)).delete(studentEntity);
+    }
+
+    @Test
+    @DisplayName("Deve lançar ResourceNotFoundException ao tentar deletar estudante com ID inexistente")
+    void delete_ShouldThrowResourceNotFoundException_WhenIdDoesNotExist(){
+        Student studentEntity = new Student();
+
+        Long nonExistentId = 99L;
+        studentEntity.setId(nonExistentId);
+
+        when(studentRepository.findById(studentEntity.getId())).thenReturn(Optional.empty());
+
+        ResourceNotFoundException exception = assertThrows(ResourceNotFoundException.class, () -> studentService.delete(studentEntity.getId()));
+
+        verify(studentRepository, never()).delete(any());
+        assertEquals("Student not found with Id " + studentEntity.getId() + ".", exception.getMessage());
+    }
+
 }

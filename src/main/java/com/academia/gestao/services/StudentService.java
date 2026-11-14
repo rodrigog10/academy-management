@@ -111,5 +111,6 @@ public class StudentService {
     public void delete(Long id) {
         Student studentEntity = findEntityById(id);
         studentRepository.delete(studentEntity);
+
     }
 }
