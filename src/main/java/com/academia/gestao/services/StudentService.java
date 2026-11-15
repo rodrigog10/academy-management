@@ -30,7 +30,6 @@ public class StudentService {
                 .orElseThrow(() -> new ResourceNotFoundException("Student not found with Id " + id + "."));
     }
 
-    // to create
     private void validateExistFields(StudentRequestDTO studentRequestDTO) {
         if (studentRepository.existsByCpf(studentRequestDTO.getCpf())) {
             throw new BusinessRuleException("Student already registered with CPF: " + studentRequestDTO.getCpf());
@@ -40,7 +39,6 @@ public class StudentService {
         }
     }
 
-    // to put method
     private void validateUniqueFields(StudentRequestDTO studentRequestDTO, Long id) {
         if (studentRepository.existsByCpfAndIdNot(studentRequestDTO.getCpf(), id)) {
             throw new BusinessRuleException("CPF already registered for another student: " + studentRequestDTO.getCpf());
@@ -50,7 +48,6 @@ public class StudentService {
         }
     }
 
-    // to patch method
     private void partialValidateUniqueFields(StudentPatchRequestDTO studentPartialRequestDTO, Long id) {
         if (studentPartialRequestDTO.getCpf() != null &&
                 studentRepository.existsByCpfAndIdNot(studentPartialRequestDTO.getCpf(), id)) {

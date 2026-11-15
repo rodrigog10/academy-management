@@ -13,6 +13,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mapstruct.factory.Mappers;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 
@@ -60,12 +61,21 @@ class StudentServiceTests {
 
         StudentResponseDTO studentResponseDTO = studentService.create(studentRequestDTO);
 
+
         assertNotNull(studentResponseDTO);
         assertEquals(studentRequestDTO.getName(), studentResponseDTO.getName());
         assertEquals(studentRequestDTO.getEmail(), studentResponseDTO.getEmail());
         assertEquals(studentRequestDTO.getCpf(), studentResponseDTO.getCpf());
 
-        verify(studentRepository, times(1)).save(any(Student.class));
+        ArgumentCaptor<Student> captor = ArgumentCaptor.forClass(Student.class);
+        verify(studentRepository, times(1)).save(captor.capture());
+        Student studentCaptured = captor.getValue();
+
+        assertNotNull(studentResponseDTO);
+        assertEquals(studentRequestDTO.getName(), studentCaptured.getName());
+        assertEquals(studentRequestDTO.getEmail(), studentCaptured.getEmail());
+        assertEquals(studentRequestDTO.getCpf(), studentCaptured.getCpf());
+
     }
 
     @Test
@@ -390,7 +400,6 @@ class StudentServiceTests {
 
     }
 
-    // TODO: implement delete test (happy path)
     @Test
     @DisplayName("Deve deletar um cadastro corretamente quando o Id existir")
     void delete_ShouldDelete_WhenIdExists(){
