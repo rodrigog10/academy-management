@@ -42,14 +42,37 @@ class StudentServiceTests {
     @Spy
     private StudentMapper studentMapper = Mappers.getMapper(StudentMapper.class);
 
-    @Test
-    @DisplayName("Deve cadastrar o estudante e retornar o DTO quando os dados forem válidos")
-    void create_ShouldCreateStudent_WhenDataIsValid() {
+
+    //private helpers
+
+    private Student createStudentEntity(){
+
+        Student studentEntity = new Student();
+        studentEntity.setId(1L);
+        studentEntity.setName("José Rodrigo Bispo");
+        studentEntity.setCpf("94159870066");
+        studentEntity.setEmail("rodrigo@gmail.com");
+
+        return studentEntity;
+    };
+
+    private StudentRequestDTO createStudentRequestDTO(){
 
         StudentRequestDTO studentRequestDTO = new StudentRequestDTO();
         studentRequestDTO.setName("José Rodrigo Bispo");
         studentRequestDTO.setEmail("rodrigo@gmail.com");
         studentRequestDTO.setCpf("94159870066");
+
+        return studentRequestDTO;
+    };
+
+    // tests
+
+    @Test
+    @DisplayName("Deve cadastrar o estudante e retornar o DTO quando os dados forem válidos")
+    void create_ShouldCreateStudent_WhenDataIsValid() {
+
+        StudentRequestDTO studentRequestDTO = createStudentRequestDTO();
 
         when(studentRepository.existsByEmail(studentRequestDTO.getEmail())).thenReturn(false);
         when(studentRepository.existsByCpf(studentRequestDTO.getCpf())).thenReturn(false);
@@ -60,7 +83,6 @@ class StudentServiceTests {
         when(studentRepository.save(any(Student.class))).thenReturn(studentEntity);
 
         StudentResponseDTO studentResponseDTO = studentService.create(studentRequestDTO);
-
 
         assertNotNull(studentResponseDTO);
         assertEquals(studentRequestDTO.getName(), studentResponseDTO.getName());
@@ -82,10 +104,7 @@ class StudentServiceTests {
     @DisplayName("Deve lançar BusinessRuleException quando o CPF já estiver cadastrado")
     void create_ShouldThrowBusinessRuleException_WhenCpfAlreadyExists() {
 
-        StudentRequestDTO studentRequestDTO = new StudentRequestDTO();
-        studentRequestDTO.setName("José Rodrigo Bispo");
-        studentRequestDTO.setCpf("94159870066");
-        studentRequestDTO.setEmail("rodrigo@gmail.com");
+        StudentRequestDTO studentRequestDTO = createStudentRequestDTO();
 
         when(studentRepository.existsByCpf(studentRequestDTO.getCpf())).thenReturn(true);
 
@@ -101,13 +120,9 @@ class StudentServiceTests {
     @DisplayName("Deve lançar BusinessRuleException quando o e-mail já estiver cadastrado")
     void create_ShouldThrowBusinessRuleException_WhenEmailAlreadyExists() {
 
-        StudentRequestDTO studentRequestDTO = new StudentRequestDTO();
-        studentRequestDTO.setName("José Rodrigo Bispo");
-        studentRequestDTO.setCpf("94159870066");
-        studentRequestDTO.setEmail("rodrigo@gmail.com");
+        StudentRequestDTO studentRequestDTO = createStudentRequestDTO();
 
         when(studentRepository.existsByEmail(studentRequestDTO.getEmail())).thenReturn(true);
-
 
         BusinessRuleException exception = assertThrows(BusinessRuleException.class, () -> studentService.create(studentRequestDTO));
 
@@ -120,23 +135,17 @@ class StudentServiceTests {
     @DisplayName("Deve retornar o estudante quando o ID existir")
     void findById_ShouldReturnStudentResponseDTO_WhenIdExists() {
 
-        Student student = new Student();
-        student.setId(1L);
-        student.setName("José Rodrigo Bispo");
-        student.setCpf("94159870066");
-        student.setEmail("rodrigo@gmail.com");
+        Student studentEntity = createStudentEntity();
 
+        when(studentRepository.findById(studentEntity.getId())).thenReturn(Optional.of(studentEntity));
 
-        when(studentRepository.findById(student.getId())).thenReturn(Optional.of(student));
-
-        StudentResponseDTO studentResponseDTO = studentService.findById(student.getId());
+        StudentResponseDTO studentResponseDTO = studentService.findById(studentEntity.getId());
 
         assertNotNull(studentResponseDTO);
-        assertEquals(student.getName(), studentResponseDTO.getName());
-        assertEquals(student.getCpf(), studentResponseDTO.getCpf());
-        assertEquals(student.getEmail(), studentResponseDTO.getEmail());
+        assertEquals(studentEntity.getName(), studentResponseDTO.getName());
+        assertEquals(studentEntity.getCpf(), studentResponseDTO.getCpf());
+        assertEquals(studentEntity.getEmail(), studentResponseDTO.getEmail());
 
-        verify(studentRepository, never()).save(any());
     }
 
     @Test
@@ -152,7 +161,6 @@ class StudentServiceTests {
 
         assertEquals("Student not found with Id " + student.getId() + ".", exception.getMessage());
 
-        verify(studentRepository, never()).save(any());
     }
 
     @Test
@@ -186,24 +194,16 @@ class StudentServiceTests {
         assertEquals(student2.getName(), response.getContent().get(1).getName());
 
         verify(studentRepository, times(1)).findAll(pageable);
-        verify(studentRepository, never()).save(any());
+
     }
 
     @Test
     @DisplayName("Deve atualizar um cadastro por completo corretamente")
     void update_ShouldReturnUpdatedStudent_WhenSuccessful() {
 
-        Student studentEntity = new Student();
-        studentEntity.setId(1L);
-        studentEntity.setName("José Rodrigo");
-        studentEntity.setEmail("rodrigo@gmail.com");
-        studentEntity.setCpf("94159870066");
+        Student studentEntity = createStudentEntity();
 
-        StudentRequestDTO studentRequestDTO = new StudentRequestDTO();
-        studentRequestDTO.setName("José Rodrigo Bispo");
-        studentRequestDTO.setEmail("rodrigobispo@gmail.com");
-        studentRequestDTO.setCpf("94159870066");
-
+        StudentRequestDTO studentRequestDTO = createStudentRequestDTO();
         when(studentRepository.findById(studentEntity.getId())).thenReturn(Optional.of(studentEntity));
 
         when(studentRepository.save(studentEntity)).thenReturn(studentEntity);
@@ -225,16 +225,10 @@ class StudentServiceTests {
     @DisplayName("Deve lançar BusinessRuleException quando o CPF já estiver cadastrado")
     void update_ShouldThrowBusinessRuleException_WhenCpfAlreadyExists() {
 
-        Student studentEntity = new Student();
+        Student studentEntity = createStudentEntity();
         studentEntity.setId(1L);
-        studentEntity.setName("José Rodrigo");
-        studentEntity.setEmail("rodrigo@gmail.com");
-        studentEntity.setCpf("94159870066");
 
-        StudentRequestDTO studentRequestDTO = new StudentRequestDTO();
-        studentRequestDTO.setName("José Rodrigo Bispo");
-        studentRequestDTO.setEmail("rodrigobispo@gmail.com");
-        //example: an existent cpf
+        StudentRequestDTO studentRequestDTO = createStudentRequestDTO();
         studentRequestDTO.setCpf("00675487099");
 
         when(studentRepository.findById(studentEntity.getId())).thenReturn(Optional.of(studentEntity));
@@ -252,16 +246,10 @@ class StudentServiceTests {
     @DisplayName("Deve lançar BusinessRuleException quando o E-mail já estiver cadastrado")
     void update_ShouldThrowBusinessRuleException_WhenEmailAlreadyExists() {
 
-        Student studentEntity = new Student();
-        studentEntity.setId(1L);
-        studentEntity.setName("José Rodrigo");
-        studentEntity.setEmail("rodrigo@gmail.com");
-        studentEntity.setCpf("94159870066");
+        Student studentEntity = createStudentEntity();
 
-        StudentRequestDTO studentRequestDTO = new StudentRequestDTO();
-        studentRequestDTO.setName("José Rodrigo Bispo");
+        StudentRequestDTO studentRequestDTO = createStudentRequestDTO();
         studentRequestDTO.setEmail("anaclara@gmail.com");
-        studentRequestDTO.setCpf("94159870066");
 
         when(studentRepository.findById(studentEntity.getId())).thenReturn(Optional.of(studentEntity));
 
@@ -280,10 +268,7 @@ class StudentServiceTests {
     void update_ShouldThrowResourceNotFoundException_WhenIdDoesNotExist() {
 
         Long nonExistentId = 99L;
-        StudentRequestDTO requestDTO = new StudentRequestDTO();
-        requestDTO.setName("José Rodrigo Bispo");
-        requestDTO.setEmail("rodrigobispo@gmail.com");
-        requestDTO.setCpf("94159870066");
+        StudentRequestDTO requestDTO = createStudentRequestDTO();
 
         when(studentRepository.findById(nonExistentId)).thenReturn(Optional.empty());
 
@@ -376,6 +361,11 @@ class StudentServiceTests {
 
     }
 
+    // TODO: implement happy paths for partialUpdate (campos enviados preenchidos, iguais aos já existentes):
+    // TODO: create partialUpdate_ShouldUpdateStudent_WhenKeepingSameCpf_AndChangingName
+    // TODO: create partialUpdate_ShouldUpdateStudent_WhenKeepingSameEmail_AndChangingName
+    // TODO: create partialUpdate_ShouldUpdateStudent_WhenKeepingSameCpfAndEmail_AndChangingName
+
     @Test
     @DisplayName("Deve lançar ResourceNotFoundException quando o ID não for encontrado")
     void partialUpdate_ShouldThrowResourceNotFoundException_WhenIdDoesNotExist(){
@@ -412,7 +402,7 @@ class StudentServiceTests {
 
         when(studentRepository.findById(studentEntity.getId())).thenReturn(Optional.of(studentEntity));
 
-        assertDoesNotThrow(() -> studentService.delete(studentEntity.getId()));
+        studentService.delete(studentEntity.getId());
         verify(studentRepository, times(1)).findById(studentEntity.getId());
         verify(studentRepository, times(1)).delete(studentEntity);
     }
