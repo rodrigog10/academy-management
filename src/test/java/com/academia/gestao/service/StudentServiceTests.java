@@ -49,7 +49,7 @@ class StudentServiceTests {
 
         Student studentEntity = new Student();
         studentEntity.setId(1L);
-        studentEntity.setName("José Rodrigo Bispo");
+        studentEntity.setName("José Rodrigo");
         studentEntity.setCpf("94159870066");
         studentEntity.setEmail("rodrigo@gmail.com");
 
@@ -59,9 +59,9 @@ class StudentServiceTests {
     private StudentRequestDTO createStudentRequestDTO(){
 
         StudentRequestDTO studentRequestDTO = new StudentRequestDTO();
-        studentRequestDTO.setName("José Rodrigo Bispo");
-        studentRequestDTO.setEmail("rodrigo@gmail.com");
+        studentRequestDTO.setName("José Rodrigo");
         studentRequestDTO.setCpf("94159870066");
+        studentRequestDTO.setEmail("rodrigo@gmail.com");
 
         return studentRequestDTO;
     };
@@ -284,24 +284,21 @@ class StudentServiceTests {
     }
 
 
-    // partialUpdate (happy path)
+    //partialUpdate, some cases
+
 
     @Test
-    @DisplayName("Deve realizar uma atualização parcial com sucesso")
-    void partialUpdate_ShouldPartialUpdate_WhenDataIsValid() {
+    @DisplayName("Deve realizar uma atualização parcial com sucesso quando apenas o nome for atualizado")
+    void partialUpdate_ShouldPartialUpdate_WhenOnlyNameIsSent() {
 
-        Student studentEntity = new Student();
-        studentEntity.setId(1L);
-        studentEntity.setName("José Rodrigo");
-        studentEntity.setEmail("rodrigo@gmail.com");
-        studentEntity.setCpf("94159870066");
+        Student studentEntity = createStudentEntity();
 
         StudentPatchRequestDTO studentPatchRequestDTO = new StudentPatchRequestDTO();
         studentPatchRequestDTO.setName("José Rodrigo Bispo");
 
-       when(studentRepository.findById(studentEntity.getId())).thenReturn(Optional.of(studentEntity));
+        when(studentRepository.findById(studentEntity.getId())).thenReturn(Optional.of(studentEntity));
 
-       when(studentRepository.save(studentEntity)).thenReturn(studentEntity);
+        when(studentRepository.save(studentEntity)).thenReturn(studentEntity);
 
         StudentResponseDTO studentResponseDTO = studentService.partialUpdate(studentEntity.getId(), studentPatchRequestDTO);
 
@@ -312,9 +309,47 @@ class StudentServiceTests {
 
         verify(studentRepository, times(1)).findById(studentEntity.getId());
         verify(studentRepository, times(1)).save(studentEntity);
+
+        verify(studentRepository, never()).existsByCpfAndIdNot(any(), any());
+        verify(studentRepository, never()).existsByEmailAndIdNot(any(), any());
     }
 
-    //partialUpdate (sad paths)
+
+    @Test
+    @DisplayName("Deve realizar uma atualização parcial com sucesso quando o email for atualizado mas o cpf for mantido")
+    void partialUpdate_ShouldUpdateEmail_WhenKeepingSameCpf(){
+
+        Student studentEntity = createStudentEntity();
+
+        StudentPatchRequestDTO studentPatchRequestDTO = new StudentPatchRequestDTO();
+        studentPatchRequestDTO.setEmail("rodrigo123@gmail.com");
+        studentPatchRequestDTO.setCpf(studentEntity.getCpf());
+
+        when(studentRepository.findById(studentEntity.getId())).thenReturn(Optional.of(studentEntity));
+        when(studentRepository.existsByEmailAndIdNot(studentPatchRequestDTO.getEmail(), studentEntity.getId())).thenReturn(false);
+        when(studentRepository.existsByCpfAndIdNot(studentEntity.getCpf(), studentEntity.getId())).thenReturn(false);
+        when(studentRepository.save(studentEntity)).thenReturn(studentEntity);
+
+        StudentResponseDTO studentResponseDTO = studentService.partialUpdate(studentEntity.getId(), studentPatchRequestDTO);
+
+        assertNotNull(studentResponseDTO);
+        assertEquals(studentEntity.getName(), studentResponseDTO.getName());
+        assertEquals(studentEntity.getEmail(), studentResponseDTO.getEmail());
+        assertEquals(studentEntity.getCpf(), studentResponseDTO.getCpf());
+
+        verify(studentRepository, times(1)).existsByEmailAndIdNot(studentPatchRequestDTO.getEmail(), studentEntity.getId());
+        verify(studentRepository, times(1)).existsByCpfAndIdNot(studentEntity.getCpf(), studentEntity.getId());
+        verify(studentRepository, times(1)).save(studentEntity);
+
+    }
+
+// TODO: criar partialUpdate_ShouldUpdateCpf_WhenKeepingSameEmail
+//       (email reenviado igual ao que já era, cpf muda de verdade)
+
+// TODO: criar partialUpdate_ShouldUpdateName_WhenKeepingSameCpfAndEmail
+//       (cpf e email reenviados, iguais aos que já eram, só o nome muda de verdade)
+
+
     @Test
     @DisplayName("Deve lançar BusinessRuleException quando o CPF já estiver cadastrado")
     void partialUpdate_ShouldThrowBusinessRuleException_WhenCpfAlreadyExists(){
@@ -362,8 +397,11 @@ class StudentServiceTests {
     }
 
     // TODO: implement happy paths for partialUpdate (campos enviados preenchidos, iguais aos já existentes):
+
     // TODO: create partialUpdate_ShouldUpdateStudent_WhenKeepingSameCpf_AndChangingName
+
     // TODO: create partialUpdate_ShouldUpdateStudent_WhenKeepingSameEmail_AndChangingName
+
     // TODO: create partialUpdate_ShouldUpdateStudent_WhenKeepingSameCpfAndEmail_AndChangingName
 
     @Test

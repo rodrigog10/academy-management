@@ -21,7 +21,6 @@ public class StudentController {
 
     private final StudentService studentService;
 
-
     @GetMapping(path = "/{id}")
     public ResponseEntity<StudentResponseDTO> findById(@PathVariable Long id) {
         return ResponseEntity.ok(studentService.findById(id));
