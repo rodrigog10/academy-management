@@ -205,8 +205,9 @@ class StudentServiceTests {
 
         StudentRequestDTO studentRequestDTO = createStudentRequestDTO();
         when(studentRepository.findById(studentEntity.getId())).thenReturn(Optional.of(studentEntity));
-
         when(studentRepository.save(studentEntity)).thenReturn(studentEntity);
+        when(studentRepository.existsByCpfAndIdNot(studentEntity.getCpf(), studentEntity.getId())).thenReturn(false);
+        when(studentRepository.existsByEmailAndIdNot(studentEntity.getEmail(), studentEntity.getId())).thenReturn(false);
 
         StudentResponseDTO studentResponseDTO = studentService.update(studentEntity.getId(), studentRequestDTO);
 
@@ -219,6 +220,8 @@ class StudentServiceTests {
 
         verify(studentRepository, times(1)).findById(studentEntity.getId());
         verify(studentRepository, times(1)).save(studentEntity);
+        verify(studentRepository, times(1)).existsByEmailAndIdNot(studentEntity.getEmail(), studentEntity.getId());
+        verify(studentRepository, times(1)).existsByCpfAndIdNot(studentEntity.getCpf(), studentEntity.getId());
     }
 
     @Test
@@ -286,7 +289,6 @@ class StudentServiceTests {
 
     //partialUpdate, some cases
 
-
     @Test
     @DisplayName("Deve realizar uma atualização parcial com sucesso quando apenas o nome for atualizado")
     void partialUpdate_ShouldPartialUpdate_WhenOnlyNameIsSent() {
@@ -309,7 +311,6 @@ class StudentServiceTests {
 
         verify(studentRepository, times(1)).findById(studentEntity.getId());
         verify(studentRepository, times(1)).save(studentEntity);
-
         verify(studentRepository, never()).existsByCpfAndIdNot(any(), any());
         verify(studentRepository, never()).existsByEmailAndIdNot(any(), any());
     }
@@ -321,9 +322,12 @@ class StudentServiceTests {
 
         Student studentEntity = createStudentEntity();
 
+        String originalName = studentEntity.getName();
+        String originalCpf = studentEntity.getCpf();
+
         StudentPatchRequestDTO studentPatchRequestDTO = new StudentPatchRequestDTO();
         studentPatchRequestDTO.setEmail("rodrigo123@gmail.com");
-        studentPatchRequestDTO.setCpf(studentEntity.getCpf());
+        studentPatchRequestDTO.setCpf(originalCpf);
 
         when(studentRepository.findById(studentEntity.getId())).thenReturn(Optional.of(studentEntity));
         when(studentRepository.existsByEmailAndIdNot(studentPatchRequestDTO.getEmail(), studentEntity.getId())).thenReturn(false);
@@ -333,12 +337,12 @@ class StudentServiceTests {
         StudentResponseDTO studentResponseDTO = studentService.partialUpdate(studentEntity.getId(), studentPatchRequestDTO);
 
         assertNotNull(studentResponseDTO);
-        assertEquals(studentEntity.getName(), studentResponseDTO.getName());
-        assertEquals(studentEntity.getEmail(), studentResponseDTO.getEmail());
-        assertEquals(studentEntity.getCpf(), studentResponseDTO.getCpf());
+        assertEquals(originalName, studentResponseDTO.getName());
+        assertEquals(studentPatchRequestDTO.getEmail(), studentResponseDTO.getEmail());
+        assertEquals(originalCpf, studentResponseDTO.getCpf());
 
         verify(studentRepository, times(1)).existsByEmailAndIdNot(studentPatchRequestDTO.getEmail(), studentEntity.getId());
-        verify(studentRepository, times(1)).existsByCpfAndIdNot(studentEntity.getCpf(), studentEntity.getId());
+        verify(studentRepository, times(1)).existsByCpfAndIdNot(originalCpf, studentEntity.getId());
         verify(studentRepository, times(1)).save(studentEntity);
 
     }
