@@ -291,6 +291,8 @@ class StudentServiceTests {
 
     @Test
     @DisplayName("Deve realizar uma atualização parcial com sucesso quando apenas o nome for atualizado")
+
+    // ADENDO: esse teste cobre o (ngc do front-end la)...
     void partialUpdate_ShouldPartialUpdate_WhenOnlyNameIsSent() {
 
         Student studentEntity = createStudentEntity();
@@ -322,11 +324,15 @@ class StudentServiceTests {
 
         Student studentEntity = createStudentEntity();
 
+        // A captura definida abaixo desse comentário serve para assegurar o código de uma possível mudança errada no ambiente real. Garante que, se um dado não mutado pelo user sofrer uma mutação inesperada por uma inserção incorreta no fluxo da regra de negócio real, o teste reconhece o erro e falha.
         String originalName = studentEntity.getName();
         String originalCpf = studentEntity.getCpf();
 
+
         StudentPatchRequestDTO studentPatchRequestDTO = new StudentPatchRequestDTO();
         studentPatchRequestDTO.setEmail("rodrigo123@gmail.com");
+
+        // Essa definição serve para simular o comportamento de um front-end mal-adaptado que reenvia no final todos os dados além do único dado que foi alterado pelo user.
         studentPatchRequestDTO.setCpf(originalCpf);
 
         when(studentRepository.findById(studentEntity.getId())).thenReturn(Optional.of(studentEntity));
@@ -350,8 +356,60 @@ class StudentServiceTests {
 // TODO: criar partialUpdate_ShouldUpdateCpf_WhenKeepingSameEmail
 //       (email reenviado igual ao que já era, cpf muda de verdade)
 
-// TODO: criar partialUpdate_ShouldUpdateName_WhenKeepingSameCpfAndEmail
-//       (cpf e email reenviados, iguais aos que já eram, só o nome muda de verdade)
+    @Test
+    @DisplayName("Deve realizar uma atualização parcial com sucesso quando o cpf for atualizado mas o email for mantido")
+    void partialUpdate_ShouldUpdateCpf_WhenKeepingSameEmail(){
+
+//instâncias, persistência do dado inicial, definição dos comportamentos, asserções & verificações.
+
+//Arrange
+
+        Student studentEntity = createStudentEntity();
+        // Cpf desatualizado/errado
+        studentEntity.setCpf("25847769440");
+
+        String originalName = studentEntity.getName();
+        String originalEmail = studentEntity.getEmail();
+
+        // Verificar dps se realmente atualizou utilizando ele
+
+        String originalCpf = studentEntity.getCpf();
+
+        StudentPatchRequestDTO studentPatchRequestDTO = new StudentPatchRequestDTO();
+
+        studentPatchRequestDTO.setCpf("94159870066");
+
+        //Essa definição é para simular o front-end mal posto.
+        studentPatchRequestDTO.setEmail(originalEmail);
+        studentPatchRequestDTO.setName(originalName);
+
+        //Act
+        when(studentRepository.findById(studentEntity.getId())).thenReturn(Optional.of(studentEntity));
+        when(studentRepository.existsByCpfAndIdNot(studentPatchRequestDTO.getCpf(), studentEntity.getId())).thenReturn(false);
+        when(studentRepository.existsByEmailAndIdNot(studentPatchRequestDTO.getEmail(), studentEntity.getId())).thenReturn(false);
+        when(studentRepository.save(studentEntity)).thenReturn(studentEntity);
+
+        StudentResponseDTO studentResponseDTO = studentService.partialUpdate(studentEntity.getId(), studentPatchRequestDTO);
+
+//Assert
+        // esperado / atual
+
+        assertNotNull(studentResponseDTO);
+        assertEquals(originalEmail, studentResponseDTO.getEmail());
+        assertEquals(originalName, studentResponseDTO.getName());
+        assertEquals(studentPatchRequestDTO.getCpf(), studentResponseDTO.getCpf());
+        assertNotEquals(originalCpf, studentResponseDTO.getCpf());
+
+        //verify's aqui
+        verify(studentRepository, times(1)).existsByEmailAndIdNot(studentPatchRequestDTO.getEmail(), studentEntity.getId());
+        verify(studentRepository, times(1)).existsByCpfAndIdNot(studentPatchRequestDTO.getCpf(), studentEntity.getId());
+        verify(studentRepository, times(1)).save(studentEntity);
+    }
+
+
+// TODO: criar partialUpdate_ShouldUpdateName_WhenKeepingSameCpfAndEmail (cpf e email reenviados, iguais aos que já eram, só o nome muda de verdade)
+
+
 
 
     @Test
@@ -387,7 +445,8 @@ class StudentServiceTests {
         studentEntity.setCpf("94159870066");
 
         StudentPatchRequestDTO studentPatchRequestDTO = new StudentPatchRequestDTO();
-        studentPatchRequestDTO.setEmail("anaclara@gmail.com");
+        //Email existente
+        studentPatchRequestDTO.setEmail("rodrigo1@gmail.com");
 
         when(studentRepository.findById(studentEntity.getId())).thenReturn(Optional.of(studentEntity));
         when(studentRepository.existsByEmailAndIdNot(studentPatchRequestDTO.getEmail(), studentEntity.getId())).thenReturn(true);
