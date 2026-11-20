@@ -21,9 +21,9 @@ API RESTful desenvolvida em **Java** e **Spring Boot** para gerenciamento de cad
 
 - **Separação Estrita de Camadas e DTOs:** Isolamento total entre as entidades de persistência e os contratos expostos na API (`Request`, `PatchRequest` e `Response`), protegendo o modelo de domínio.
 - **Integridade e Regras de Negócio:** Validação de unicidade para dados sensíveis (CPF e e-mail) tanto no cadastro quanto nas operações de atualização, evitando inconsistências na base.
-- **Operações REST Completas:** Suporte a criação, busca individual, listagem paginada, atualização integral (`PUT`), atualização parcial sem sobrescrita de campos nulos (`PATCH`) e exclusão.
+- **Resiliência em Atualizações Parciais (PATCH):** Lógica robusta que garante a integridade dos dados e regras de negócio mesmo em cenários de integração adversos (ex: front-end re-enviando payloads completos de dados não modificados).
 - **Tratamento Global de Exceções:** Captura centralizada de erros de validação, regras de negócio e recursos não encontrados, retornando respostas HTTP semânticas e payloads JSON padronizados.
-- **Qualidade de Software com Testes Unitários:** Cobertura da camada de serviços com JUnit 5 e Mockito, validando fluxos de sucesso, exceções de negócio e isolamento de efeitos colaterais.
+- **Qualidade de Software com Testes Unitários:** Cobertura abrangente da camada de serviços com JUnit 5 e Mockito. A suíte de testes valida fluxos de sucesso, exceções de negócio, isolamento de efeitos colaterais e blinda o código contra falsos positivos em mutações de dados.
 
 ---
 
@@ -38,8 +38,6 @@ API RESTful desenvolvida em **Java** e **Spring Boot** para gerenciamento de cad
 | `PATCH` | `/students/{id}` | Atualização parcial dos dados do aluno | `200 OK` |
 | `DELETE` | `/students/{id}` | Remove um aluno da base de dados | `204 No Content` |
 
-*(Nota: Caso suas rotas ainda estejam mapeadas como `/alunos`, basta ajustar a coluna de rotas acima para manter 100% de fidelidade com o Controller).*
-
 ---
 
 ## ⚙️ Como Executar o Projeto
@@ -53,7 +51,7 @@ API RESTful desenvolvida em **Java** e **Spring Boot** para gerenciamento de cad
 
 1. **Clone o repositório:**
    ```bash
-   git clone [https://github.com/SEU-USUARIO/NOME-DO-REPOSITORIO.git](https://github.com/SEU-USUARIO/NOME-DO-REPOSITORIO.git)
+   git clone https://github.com/SEU-USUARIO/NOME-DO-REPOSITORIO.git
    cd NOME-DO-REPOSITORIO
 
     Suba o banco de dados PostgreSQL via Docker Compose:
@@ -66,10 +64,11 @@ API RESTful desenvolvida em **Java** e **Spring Boot** para gerenciamento de cad
 
     ./mvnw spring-boot:run
 
-A API estará disponível em http://localhost:8080.
+    A API estará disponível em http://localhost:8080.
+
 🧪 Executando os Testes
 
-Para rodar a suíte de testes automatizados via Maven:
+Para rodar a suíte completa de testes automatizados via Maven:
 Bash
 
 ./mvnw test
