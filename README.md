@@ -14,6 +14,7 @@ API RESTful desenvolvida em **Java** e **Spring Boot** para gerenciamento de cad
 - **JUnit 5 & Mockito** (Testes unitários automatizados)
 - **Docker & Docker Compose** (Containerização do ambiente)
 - **Maven** (Gerenciamento de dependências e build)
+- **SpringDoc OpenAPI & Scalar** (Documentação interativa e moderna da API)
 
 ---
 
@@ -76,9 +77,3 @@ Bash
 🗺️ Próximos Passos
 
     [ ] Testes de camada Web (@WebMvcTest + MockMvc) para validação de contratos HTTP
-
-    [ ] Autenticação e autorização stateless com Spring Security + JWT
-
-    [ ] Controle de acesso baseado em perfis (ADMIN, STUDENT)
-
-    [ ] Documentação interativa da API com Swagger / OpenAPI
