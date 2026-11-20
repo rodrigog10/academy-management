@@ -93,11 +93,11 @@ public class StudentService {
     }
 
     @Transactional
-    public StudentResponseDTO partialUpdate(Long id, StudentPatchRequestDTO studentPartialRequestDTO) {
+    public StudentResponseDTO partialUpdate(Long id, StudentPatchRequestDTO studentPatchRequestDTO) {
         Student studentEntity = findEntityById(id);
-        partialValidateUniqueFields(studentPartialRequestDTO, id);
+        partialValidateUniqueFields(studentPatchRequestDTO, id);
 
-        studentMapper.partialEntityUpdateFromDTO(studentPartialRequestDTO, studentEntity);
+        studentMapper.partialEntityUpdateFromDTO(studentPatchRequestDTO, studentEntity);
         Student studentUpdatedEntity = studentRepository.save(studentEntity);
 
         return studentMapper.toStudentDTO(studentUpdatedEntity);

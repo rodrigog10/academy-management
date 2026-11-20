@@ -108,7 +108,6 @@ class StudentServiceTests {
 
         when(studentRepository.existsByCpf(studentRequestDTO.getCpf())).thenReturn(true);
 
-
         BusinessRuleException exception = assertThrows(BusinessRuleException.class, () -> studentService.create(studentRequestDTO));
 
         assertEquals("Student already registered with CPF: " + studentRequestDTO.getCpf(), exception.getMessage());
@@ -292,7 +291,6 @@ class StudentServiceTests {
     @Test
     @DisplayName("Deve realizar uma atualização parcial com sucesso quando apenas o nome for atualizado")
 
-    // ADENDO: esse teste cobre o (ngc do front-end la)...
     void partialUpdate_ShouldPartialUpdate_WhenOnlyNameIsSent() {
 
         Student studentEntity = createStudentEntity();
@@ -317,14 +315,13 @@ class StudentServiceTests {
         verify(studentRepository, never()).existsByEmailAndIdNot(any(), any());
     }
 
-
     @Test
     @DisplayName("Deve realizar uma atualização parcial com sucesso quando o email for atualizado mas o cpf for mantido")
     void partialUpdate_ShouldUpdateEmail_WhenKeepingSameCpf(){
 
         Student studentEntity = createStudentEntity();
 
-        // A captura definida abaixo desse comentário serve para assegurar o código de uma possível mudança errada no ambiente real. Garante que, se um dado não mutado pelo user sofrer uma mutação inesperada por uma inserção incorreta no fluxo da regra de negócio real, o teste reconhece o erro e falha.
+        // A captura definida abaixo serve para assegurar o código de uma possível mutação errada no ambiente real. Garante que, se um dado não mutado sofrer uma mutação inesperada por uma inserção incorreta no fluxo da regra de negócio real, o teste reconhece o erro e falha.
         String originalName = studentEntity.getName();
         String originalCpf = studentEntity.getCpf();
 
@@ -332,8 +329,9 @@ class StudentServiceTests {
         StudentPatchRequestDTO studentPatchRequestDTO = new StudentPatchRequestDTO();
         studentPatchRequestDTO.setEmail("rodrigo123@gmail.com");
 
-        // Essa definição serve para simular o comportamento de um front-end mal-adaptado que reenvia no final todos os dados além do único dado que foi alterado pelo user.
+        // Essa definição que não tem assimilação com o objetivo principal do teste (atualizar o email) serve para simular o comportamento de um front-end mal-adaptado que reenvia no final todos os dados além do único dado que foi alterado pelo user. O backend define um contrato previsível para o PATCH.
         studentPatchRequestDTO.setCpf(originalCpf);
+        studentPatchRequestDTO.setName(originalName);
 
         when(studentRepository.findById(studentEntity.getId())).thenReturn(Optional.of(studentEntity));
         when(studentRepository.existsByEmailAndIdNot(studentPatchRequestDTO.getEmail(), studentEntity.getId())).thenReturn(false);
@@ -353,25 +351,17 @@ class StudentServiceTests {
 
     }
 
-// TODO: criar partialUpdate_ShouldUpdateCpf_WhenKeepingSameEmail
-//       (email reenviado igual ao que já era, cpf muda de verdade)
-
     @Test
     @DisplayName("Deve realizar uma atualização parcial com sucesso quando o cpf for atualizado mas o email for mantido")
     void partialUpdate_ShouldUpdateCpf_WhenKeepingSameEmail(){
 
-//instâncias, persistência do dado inicial, definição dos comportamentos, asserções & verificações.
-
-//Arrange
-
         Student studentEntity = createStudentEntity();
-        // Cpf desatualizado/errado
+        // define um cpf desatualizado.
         studentEntity.setCpf("25847769440");
 
+        // A captura definida abaixo serve para assegurar o código de uma possível mutação errada no ambiente real. Garante que, se um dado não mutado sofrer uma mutação inesperada por uma inserção incorreta no fluxo da regra de negócio real, o teste reconhece o erro e falha.
         String originalName = studentEntity.getName();
         String originalEmail = studentEntity.getEmail();
-
-        // Verificar dps se realmente atualizou utilizando ele
 
         String originalCpf = studentEntity.getCpf();
 
@@ -379,11 +369,10 @@ class StudentServiceTests {
 
         studentPatchRequestDTO.setCpf("94159870066");
 
-        //Essa definição é para simular o front-end mal posto.
+        // Essa definição que não tem assimilação com o objetivo principal do teste (atualizar o email) serve para simular o comportamento de um front-end mal-adaptado que reenvia no final todos os dados além do único dado que foi alterado pelo user. O backend define um contrato previsível para o PATCH.
         studentPatchRequestDTO.setEmail(originalEmail);
         studentPatchRequestDTO.setName(originalName);
 
-        //Act
         when(studentRepository.findById(studentEntity.getId())).thenReturn(Optional.of(studentEntity));
         when(studentRepository.existsByCpfAndIdNot(studentPatchRequestDTO.getCpf(), studentEntity.getId())).thenReturn(false);
         when(studentRepository.existsByEmailAndIdNot(studentPatchRequestDTO.getEmail(), studentEntity.getId())).thenReturn(false);
@@ -391,26 +380,47 @@ class StudentServiceTests {
 
         StudentResponseDTO studentResponseDTO = studentService.partialUpdate(studentEntity.getId(), studentPatchRequestDTO);
 
-//Assert
-        // esperado / atual
-
         assertNotNull(studentResponseDTO);
         assertEquals(originalEmail, studentResponseDTO.getEmail());
         assertEquals(originalName, studentResponseDTO.getName());
         assertEquals(studentPatchRequestDTO.getCpf(), studentResponseDTO.getCpf());
         assertNotEquals(originalCpf, studentResponseDTO.getCpf());
 
-        //verify's aqui
         verify(studentRepository, times(1)).existsByEmailAndIdNot(studentPatchRequestDTO.getEmail(), studentEntity.getId());
         verify(studentRepository, times(1)).existsByCpfAndIdNot(studentPatchRequestDTO.getCpf(), studentEntity.getId());
         verify(studentRepository, times(1)).save(studentEntity);
     }
 
+    @Test
+    @DisplayName("Deve realizar uma atualização parcial com sucesso quando apenas o nome for alterado e os demais campos forem reenviados inalterados")
+    void partialUpdate_ShouldUpdateName_WhenKeepingSameCpfAndEmail(){
 
-// TODO: criar partialUpdate_ShouldUpdateName_WhenKeepingSameCpfAndEmail (cpf e email reenviados, iguais aos que já eram, só o nome muda de verdade)
+        Student studentEntity = createStudentEntity();
+        String originalName = studentEntity.getName();
+        String originalCpf = studentEntity.getCpf();
+        String originalEmail = studentEntity.getEmail();
 
+        StudentPatchRequestDTO studentPatchRequestDTO = new StudentPatchRequestDTO();
+        studentPatchRequestDTO.setName("José Rodrigo Bispo");
+        studentPatchRequestDTO.setEmail(originalEmail);
+        studentPatchRequestDTO.setCpf(originalCpf);
 
+        when(studentRepository.findById(studentEntity.getId())).thenReturn(Optional.of(studentEntity));
+        when(studentRepository.existsByEmailAndIdNot(studentPatchRequestDTO.getEmail(), studentEntity.getId())).thenReturn(false);
+        when(studentRepository.existsByCpfAndIdNot(studentPatchRequestDTO.getCpf(), studentEntity.getId())).thenReturn(false);
+        when(studentRepository.save(studentEntity)).thenReturn(studentEntity);
 
+        StudentResponseDTO studentResponseDTO = studentService.partialUpdate(studentEntity.getId(), studentPatchRequestDTO);
+
+        assertNotNull(studentResponseDTO);
+        assertNotEquals(originalName, studentResponseDTO.getName());
+        assertEquals(originalEmail, studentResponseDTO.getEmail());
+        assertEquals(originalCpf, studentResponseDTO.getCpf());
+
+        verify(studentRepository, times(1)).existsByEmailAndIdNot(studentPatchRequestDTO.getEmail(), studentEntity.getId());
+        verify(studentRepository, times(1)).existsByCpfAndIdNot(studentPatchRequestDTO.getCpf(), studentEntity.getId());
+        verify(studentRepository, times(1)).save(studentEntity);
+    }
 
     @Test
     @DisplayName("Deve lançar BusinessRuleException quando o CPF já estiver cadastrado")
@@ -458,14 +468,6 @@ class StudentServiceTests {
         verify(studentRepository, never()).save(any());
 
     }
-
-    // TODO: implement happy paths for partialUpdate (campos enviados preenchidos, iguais aos já existentes):
-
-    // TODO: create partialUpdate_ShouldUpdateStudent_WhenKeepingSameCpf_AndChangingName
-
-    // TODO: create partialUpdate_ShouldUpdateStudent_WhenKeepingSameEmail_AndChangingName
-
-    // TODO: create partialUpdate_ShouldUpdateStudent_WhenKeepingSameCpfAndEmail_AndChangingName
 
     @Test
     @DisplayName("Deve lançar ResourceNotFoundException quando o ID não for encontrado")
