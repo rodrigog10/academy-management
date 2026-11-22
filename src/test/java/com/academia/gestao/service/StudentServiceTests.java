@@ -59,7 +59,7 @@ class StudentServiceTests {
     private StudentRequestDTO createStudentRequestDTO(){
 
         StudentRequestDTO studentRequestDTO = new StudentRequestDTO();
-        studentRequestDTO.setName("José Rodrigo ");
+        studentRequestDTO.setName("José Rodrigo");
         studentRequestDTO.setCpf("94159870066");
         studentRequestDTO.setEmail("rodrigo@gmail.com");
 
@@ -77,17 +77,11 @@ class StudentServiceTests {
         when(studentRepository.existsByEmail(studentRequestDTO.getEmail())).thenReturn(false);
         when(studentRepository.existsByCpf(studentRequestDTO.getCpf())).thenReturn(false);
 
-        Student studentEntity = studentMapper.toStudentEntity(studentRequestDTO);
-        studentEntity.setId(1L);
+        Student studentEntity = createStudentEntity();
 
         when(studentRepository.save(any(Student.class))).thenReturn(studentEntity);
 
         StudentResponseDTO studentResponseDTO = studentService.create(studentRequestDTO);
-
-        assertNotNull(studentResponseDTO);
-        assertEquals(studentRequestDTO.getName(), studentResponseDTO.getName());
-        assertEquals(studentRequestDTO.getEmail(), studentResponseDTO.getEmail());
-        assertEquals(studentRequestDTO.getCpf(), studentResponseDTO.getCpf());
 
         ArgumentCaptor<Student> captor = ArgumentCaptor.forClass(Student.class);
 
@@ -99,6 +93,11 @@ class StudentServiceTests {
         assertEquals(studentRequestDTO.getName(), studentCaptured.getName());
         assertEquals(studentRequestDTO.getEmail(), studentCaptured.getEmail());
         assertEquals(studentRequestDTO.getCpf(), studentCaptured.getCpf());
+
+        assertNotNull(studentResponseDTO);
+        assertEquals(studentRequestDTO.getName(), studentResponseDTO.getName());
+        assertEquals(studentRequestDTO.getEmail(), studentResponseDTO.getEmail());
+        assertEquals(studentRequestDTO.getCpf(), studentResponseDTO.getCpf());
 
     }
 
@@ -215,6 +214,17 @@ class StudentServiceTests {
 
         StudentResponseDTO studentResponseDTO = studentService.update(studentEntity.getId(), studentRequestDTO);
 
+        ArgumentCaptor<Student> captor = ArgumentCaptor.forClass(Student.class);
+
+        verify(studentRepository, times(1)).save(captor.capture());
+
+        Student studentCaptured = captor.getValue();
+
+        assertNotNull(studentCaptured);
+        assertEquals(studentRequestDTO.getName(), studentCaptured.getName());
+        assertEquals(studentRequestDTO.getEmail(), studentCaptured.getEmail());
+        assertEquals(studentRequestDTO.getCpf(), studentCaptured.getCpf());
+
         assertNotNull(studentResponseDTO);
         assertEquals(studentEntity.getId(), studentResponseDTO.getId());
 
@@ -226,16 +236,6 @@ class StudentServiceTests {
         verify(studentRepository, times(1)).existsByEmailAndIdNot(studentRequestDTO.getEmail(), studentEntity.getId());
         verify(studentRepository, times(1)).existsByCpfAndIdNot(studentRequestDTO.getCpf(), studentEntity.getId());
 
-        ArgumentCaptor<Student> captor = ArgumentCaptor.forClass(Student.class);
-
-        verify(studentRepository, times(1)).save(captor.capture());
-
-        Student studentCaptured = captor.getValue();
-
-        assertNotNull(studentCaptured);
-        assertEquals(studentRequestDTO.getName(), studentCaptured.getName());
-        assertEquals(studentRequestDTO.getEmail(), studentCaptured.getEmail());
-        assertEquals(studentRequestDTO.getCpf(), studentCaptured.getCpf());
     }
 
     @Test
@@ -309,6 +309,8 @@ class StudentServiceTests {
     void partialUpdate_ShouldPartialUpdate_WhenOnlyNameIsSent() {
 
         Student studentEntity = createStudentEntity();
+        String originalEmail = studentEntity.getEmail();
+        String originalCpf = studentEntity.getCpf();
 
         StudentPatchRequestDTO studentPatchRequestDTO = new StudentPatchRequestDTO();
         studentPatchRequestDTO.setName("José Rodrigo Bispo");
@@ -321,8 +323,8 @@ class StudentServiceTests {
 
         assertNotNull(studentResponseDTO);
         assertEquals(studentPatchRequestDTO.getName(), studentResponseDTO.getName());
-        assertEquals(studentEntity.getEmail(), studentResponseDTO.getEmail());
-        assertEquals(studentEntity.getCpf(), studentResponseDTO.getCpf());
+        assertEquals(originalEmail, studentResponseDTO.getEmail());
+        assertEquals(originalCpf, studentResponseDTO.getCpf());
 
         verify(studentRepository, times(1)).findById(studentEntity.getId());
         verify(studentRepository, times(1)).save(studentEntity);
@@ -384,7 +386,7 @@ class StudentServiceTests {
 
         studentPatchRequestDTO.setCpf("94159870066");
 
-        // Essa definição que não tem assimilação com o objetivo principal do teste (atualizar o email) serve para simular o comportamento de um front-end mal-adaptado que reenvia no final todos os dados além do único dado que foi alterado pelo user. O backend define um contrato previsível para o PATCH.
+        // Essa definição que não tem assimilação com o objetivo principal do teste (atualizar o cpf) serve para simular o comportamento de um front-end mal-adaptado que reenvia no final todos os dados além do único dado que foi alterado pelo user. O backend define um contrato previsível para o PATCH.
         studentPatchRequestDTO.setEmail(originalEmail);
         studentPatchRequestDTO.setName(originalName);
 
@@ -429,6 +431,7 @@ class StudentServiceTests {
 
         assertNotNull(studentResponseDTO);
         assertNotEquals(originalName, studentResponseDTO.getName());
+        assertEquals(studentPatchRequestDTO.getName(), studentResponseDTO.getName());
         assertEquals(originalEmail, studentResponseDTO.getEmail());
         assertEquals(originalCpf, studentResponseDTO.getCpf());
 
@@ -440,11 +443,7 @@ class StudentServiceTests {
     @Test
     @DisplayName("Deve lançar BusinessRuleException quando o CPF já estiver cadastrado")
     void partialUpdate_ShouldThrowBusinessRuleException_WhenCpfAlreadyExists(){
-        Student studentEntity = new Student();
-        studentEntity.setId(1L);
-        studentEntity.setName("José Rodrigo");
-        studentEntity.setEmail("rodrigo@gmail.com");
-        studentEntity.setCpf("94159870066");
+        Student studentEntity = createStudentEntity();
 
         StudentPatchRequestDTO studentPatchRequestDTO = new StudentPatchRequestDTO();
         studentPatchRequestDTO.setCpf("00675487099");
@@ -463,11 +462,7 @@ class StudentServiceTests {
     @Test
     @DisplayName("Deve lançar BusinessRuleException quando o E-mail já estiver cadastrado")
     void partialUpdate_ShouldThrowBusinessRuleException_WhenEmailAlreadyExists(){
-        Student studentEntity = new Student();
-        studentEntity.setId(1L);
-        studentEntity.setName("José Rodrigo");
-        studentEntity.setEmail("rodrigo@gmail.com");
-        studentEntity.setCpf("94159870066");
+        Student studentEntity = createStudentEntity();
 
         StudentPatchRequestDTO studentPatchRequestDTO = new StudentPatchRequestDTO();
         //Email existente
@@ -487,11 +482,7 @@ class StudentServiceTests {
     @Test
     @DisplayName("Deve lançar ResourceNotFoundException quando o ID não for encontrado")
     void partialUpdate_ShouldThrowResourceNotFoundException_WhenIdDoesNotExist(){
-        Student studentEntity = new Student();
-        studentEntity.setId(1L);
-        studentEntity.setName("José Rodrigo");
-        studentEntity.setEmail("rodrigo@gmail.com");
-        studentEntity.setCpf("94159870066");
+        Student studentEntity = createStudentEntity();
 
         StudentPatchRequestDTO studentPatchRequestDTO = new StudentPatchRequestDTO();
         studentPatchRequestDTO.setName("José Rodrigo Bispo");
@@ -511,12 +502,7 @@ class StudentServiceTests {
     @Test
     @DisplayName("Deve deletar um cadastro corretamente quando o Id existir")
     void delete_ShouldDelete_WhenIdExists(){
-        Student studentEntity = new Student();
-
-        studentEntity.setId(1L);
-        studentEntity.setName("José Rodrigo");
-        studentEntity.setEmail("rodrigo@gmail.com");
-        studentEntity.setCpf("94159870066");
+        Student studentEntity = createStudentEntity();
 
         when(studentRepository.findById(studentEntity.getId())).thenReturn(Optional.of(studentEntity));
 
