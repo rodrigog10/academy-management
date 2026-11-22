@@ -54,17 +54,17 @@ class StudentServiceTests {
         studentEntity.setEmail("rodrigo@gmail.com");
 
         return studentEntity;
-    };
+    }
 
     private StudentRequestDTO createStudentRequestDTO(){
 
         StudentRequestDTO studentRequestDTO = new StudentRequestDTO();
-        studentRequestDTO.setName("José Rodrigo");
+        studentRequestDTO.setName("José Rodrigo ");
         studentRequestDTO.setCpf("94159870066");
         studentRequestDTO.setEmail("rodrigo@gmail.com");
 
         return studentRequestDTO;
-    };
+    }
 
     // tests
 
@@ -90,10 +90,12 @@ class StudentServiceTests {
         assertEquals(studentRequestDTO.getCpf(), studentResponseDTO.getCpf());
 
         ArgumentCaptor<Student> captor = ArgumentCaptor.forClass(Student.class);
+
         verify(studentRepository, times(1)).save(captor.capture());
+
         Student studentCaptured = captor.getValue();
 
-        assertNotNull(studentResponseDTO);
+        assertNotNull(studentCaptured);
         assertEquals(studentRequestDTO.getName(), studentCaptured.getName());
         assertEquals(studentRequestDTO.getEmail(), studentCaptured.getEmail());
         assertEquals(studentRequestDTO.getCpf(), studentCaptured.getCpf());
@@ -201,12 +203,15 @@ class StudentServiceTests {
     void update_ShouldReturnUpdatedStudent_WhenSuccessful() {
 
         Student studentEntity = createStudentEntity();
-
         StudentRequestDTO studentRequestDTO = createStudentRequestDTO();
+        studentRequestDTO.setName("José Rodrigo Bispo");
+        studentRequestDTO.setEmail("rodrigobispo@gmail.com");
+        studentRequestDTO.setCpf("00675487099");
+
         when(studentRepository.findById(studentEntity.getId())).thenReturn(Optional.of(studentEntity));
         when(studentRepository.save(studentEntity)).thenReturn(studentEntity);
-        when(studentRepository.existsByCpfAndIdNot(studentEntity.getCpf(), studentEntity.getId())).thenReturn(false);
-        when(studentRepository.existsByEmailAndIdNot(studentEntity.getEmail(), studentEntity.getId())).thenReturn(false);
+        when(studentRepository.existsByCpfAndIdNot(studentRequestDTO.getCpf(), studentEntity.getId())).thenReturn(false);
+        when(studentRepository.existsByEmailAndIdNot(studentRequestDTO.getEmail(), studentEntity.getId())).thenReturn(false);
 
         StudentResponseDTO studentResponseDTO = studentService.update(studentEntity.getId(), studentRequestDTO);
 
@@ -218,9 +223,19 @@ class StudentServiceTests {
         assertEquals(studentRequestDTO.getCpf(), studentResponseDTO.getCpf());
 
         verify(studentRepository, times(1)).findById(studentEntity.getId());
-        verify(studentRepository, times(1)).save(studentEntity);
-        verify(studentRepository, times(1)).existsByEmailAndIdNot(studentEntity.getEmail(), studentEntity.getId());
-        verify(studentRepository, times(1)).existsByCpfAndIdNot(studentEntity.getCpf(), studentEntity.getId());
+        verify(studentRepository, times(1)).existsByEmailAndIdNot(studentRequestDTO.getEmail(), studentEntity.getId());
+        verify(studentRepository, times(1)).existsByCpfAndIdNot(studentRequestDTO.getCpf(), studentEntity.getId());
+
+        ArgumentCaptor<Student> captor = ArgumentCaptor.forClass(Student.class);
+
+        verify(studentRepository, times(1)).save(captor.capture());
+
+        Student studentCaptured = captor.getValue();
+
+        assertNotNull(studentCaptured);
+        assertEquals(studentRequestDTO.getName(), studentCaptured.getName());
+        assertEquals(studentRequestDTO.getEmail(), studentCaptured.getEmail());
+        assertEquals(studentRequestDTO.getCpf(), studentCaptured.getCpf());
     }
 
     @Test
