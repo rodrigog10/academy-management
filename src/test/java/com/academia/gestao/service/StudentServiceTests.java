@@ -303,6 +303,12 @@ class StudentServiceTests {
 
     //partialUpdate, some cases
 
+    // TODO: Refatorar com ArgumentCaptor<Student> no save():
+    // 1. partialUpdate_ShouldPartialUpdate_WhenOnlyNameIsSent()
+    // 2. partialUpdate_ShouldUpdateEmail_WhenKeepingSameCpf()
+    // 3. partialUpdate_ShouldUpdateCpf_WhenKeepingSameEmail()
+    // 4. partialUpdate_ShouldUpdateName_WhenKeepingSameCpfAndEmail()
+
     @Test
     @DisplayName("Deve realizar uma atualização parcial com sucesso quando apenas o nome for atualizado")
 
@@ -314,6 +320,7 @@ class StudentServiceTests {
 
         StudentPatchRequestDTO studentPatchRequestDTO = new StudentPatchRequestDTO();
         studentPatchRequestDTO.setName("José Rodrigo Bispo");
+        //aqui, diferentemente dos outros testes, é levado em consideração o caso em que o front-end está adaptado a enviar apenas o campo alterado (demais nulos), sem se envolver com os outros de forma alguma.
 
         when(studentRepository.findById(studentEntity.getId())).thenReturn(Optional.of(studentEntity));
 
@@ -341,7 +348,6 @@ class StudentServiceTests {
         // A captura definida abaixo serve para assegurar o código de uma possível mutação errada no ambiente real. Garante que, se um dado não mutado sofrer uma mutação inesperada por uma inserção incorreta no fluxo da regra de negócio real, o teste reconhece o erro e falha.
         String originalName = studentEntity.getName();
         String originalCpf = studentEntity.getCpf();
-
 
         StudentPatchRequestDTO studentPatchRequestDTO = new StudentPatchRequestDTO();
         studentPatchRequestDTO.setEmail("rodrigo123@gmail.com");

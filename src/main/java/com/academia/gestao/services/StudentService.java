@@ -87,6 +87,7 @@ public class StudentService {
         validateUniqueFields(studentRequestDTO, id);
 
         studentMapper.updateEntityFromDTO(studentRequestDTO, studentEntity);
+
         Student studentUpdatedEntity = studentRepository.save(studentEntity);
 
         return studentMapper.toStudentDTO(studentUpdatedEntity);
