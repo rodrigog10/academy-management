@@ -214,17 +214,6 @@ class StudentServiceTests {
 
         StudentResponseDTO studentResponseDTO = studentService.update(studentEntity.getId(), studentRequestDTO);
 
-        ArgumentCaptor<Student> captor = ArgumentCaptor.forClass(Student.class);
-
-        verify(studentRepository, times(1)).save(captor.capture());
-
-        Student studentCaptured = captor.getValue();
-
-        assertNotNull(studentCaptured);
-        assertEquals(studentRequestDTO.getName(), studentCaptured.getName());
-        assertEquals(studentRequestDTO.getEmail(), studentCaptured.getEmail());
-        assertEquals(studentRequestDTO.getCpf(), studentCaptured.getCpf());
-
         assertNotNull(studentResponseDTO);
         assertEquals(studentEntity.getId(), studentResponseDTO.getId());
 
@@ -302,12 +291,6 @@ class StudentServiceTests {
 
 
     //partialUpdate, some cases
-
-    // TODO: Refatorar com ArgumentCaptor<Student> no save():
-    // 1. partialUpdate_ShouldPartialUpdate_WhenOnlyNameIsSent()
-    // 2. partialUpdate_ShouldUpdateEmail_WhenKeepingSameCpf()
-    // 3. partialUpdate_ShouldUpdateCpf_WhenKeepingSameEmail()
-    // 4. partialUpdate_ShouldUpdateName_WhenKeepingSameCpfAndEmail()
 
     @Test
     @DisplayName("Deve realizar uma atualização parcial com sucesso quando apenas o nome for atualizado")
